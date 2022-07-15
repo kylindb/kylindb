@@ -1,0 +1,86 @@
+name: Compile & MTR
+
+on:
+  push:
+    branches: [ "main" ]
+    # branches-ignore:
+    #  - main
+    paths-ignore:
+      - 'docs/**'
+      - 'website/**'
+      - '**.md'
+      - 'scripts/setup/**'
+      - '.devcontainer/**'
+  pull_request:
+    branches: [ "main" ]
+    # branches-ignore:
+    #   - main
+        # wait for mergify to ignore
+        #paths-ignore:
+            #- 'Docs/**'
+            #- 'website/**'
+            #- '**.md'
+            #- 'scripts/**'
+            #- 'install_scripts/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  PROTOC: protoc
+
+
+jobs:
+  kylindb-build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install cmake make perl bison libaio-dev \
+          openssl libssl-dev libncurses5-dev libreadline-dev \
+          autoconf automake libtool \
+          libreadline-dev libpam0g-dev zlib1g-dev libcurl-ocaml-dev \
+          autotools-dev libicu-dev libboost-all-dev \
+          libgflags-dev libsnappy-dev libbz2-dev liblz4-dev libzstd-dev libjemalloc-dev -y
+          sudo apt install gcc -y
+       
+      - name: compile kylindb
+        run: |
+          mkdir build-release
+          cd build-release
+          sudo cmake ../ \
+          -DCMAKE_BUILD_TYPE=release \
+          -DCMAKE_INSTALL_PREFIX=/kylindb/install \
+          -DMYSQL_DATADIR=/kylindb/install/data \
+          -DSYSCONFDIR=/kylindb/install \
+          -DMYSQL_UNIX_ADDR=/kylindb/install/tmp/mysql.sock \
+          -DWITH_EMBEDDED_SERVER=OFF \
+          -DWITH_STONEDB_STORAGE_ENGINE=1 \
+          -DWITH_MYISAM_STORAGE_ENGINE=1 \
+          -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+          -DWITH_PARTITION_STORAGE_ENGINE=1 \
+          -DMYSQL_TCP_PORT=3306 \
+          -DENABLED_LOCAL_INFILE=1 \
+          -DEXTRA_CHARSETS=all \
+          -DDEFAULT_CHARSET=utf8 \
+          -DDEFAULT_COLLATION=utf8_general_ci \
+          -DWITH_BOOST=../boost/boost
+          sudo make VERBOSE=1 -j`nproc`
+          sudo make install -j`nproc`
+
+          #- name: mtr test
+          #  run: |
+          #    sudo mkdir -p /kylindb/install/data/innodb
+          #    sudo mkdir -p /kylindb/install/binlog
+          #    sudo mkdir -p /kylindb/install/log
+          #    sudo mkdir -p /kylindb/install/tmp
+          #    sudo chown -R mysql:mysql /kylindb
+          #    cd /kylindb/install/mysql-test
+          #    sudo ./mysql-test-run.pl --suite=suite-name --nowarnings --force
+
