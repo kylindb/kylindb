@@ -1,0 +1,30 @@
+# for MacOS and Ubuntu
+CURDIR=$(pwd)
+INSTALLDIR=$CURDIR/../../mysql80-install
+DATADIR=$CURDIR/../../mysql80-default-data
+BOOSTDIR=$CURDIR/../../boost_1_77_0
+rm CMakeCache.txt -f
+cmake .. \
+	-DCMAKE_BUILD_TYPE=Debug \
+	-DCMAKE_INSTALL_PREFIX=$INSTALLDIR \
+	-DSYSCONFDIR=/etc \
+	-DMYSQL_DATADIR=$DATADIR \
+	-DMYSQL_UNIX_ADDR=/tmp/mysqld.sock \
+	-DMYSQL_USER=wslu \
+	-DMYSQL_TCP_PORT=3306 \
+	-DWITH_MYISAM_STORAGE_ENGINE=1 \
+	-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+	-DWITH_MEMORY_STORAGE_ENGINE=1 \
+	-DWITH_PARTITION_STORAGE_ENGINE=1 \
+	-DEXTRA_CHARSETS=all \
+	-DENABLED_LOCAL_INFILE=1 \
+	-DWITH_DEBUG=1 \
+	-DWITH_BOOST=$BOOSTDIR \
+	-DFORCE_INSOURCE_BUILD=1
+
+if [ $? != 0 ]; then
+	exit 1
+fi
+# for MacOS, only need make
+make -j4
+make install

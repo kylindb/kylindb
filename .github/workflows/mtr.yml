@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: install prerequisites
         run: |
           sudo apt-get update
@@ -49,11 +49,11 @@ jobs:
           autotools-dev libicu-dev libboost-all-dev \
           libgflags-dev libsnappy-dev libbz2-dev liblz4-dev libzstd-dev libjemalloc-dev -y
           sudo apt install gcc -y
-       
+
       - name: compile kylindb
         run: |
-          mkdir build-release
-          cd build-release
+          mkdir mtr-build-release
+          cd mtr-build-release
           sudo cmake ../ \
           -DCMAKE_BUILD_TYPE=release \
           -DCMAKE_INSTALL_PREFIX=/kylindb/install \
